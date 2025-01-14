@@ -37,6 +37,20 @@ def ask_for_input_folder(default='./test_input'):
         folder_path = default
     return folder_path
 
+def write_text_to_file(file_path, text):
+    """
+    Writes the given text to a file at the specified path.
+
+    Args:
+    file_path (str): The path to the file where the text will be written.
+    text (str): The text to write to the file.
+    """
+    try:
+        with open(file_path, 'w') as file:
+            file.write(text)
+    except Exception as e:
+        print(f"An error occurred while writing to the file: {e}")
+
 # Ollama
 def extract_text(file):
     response: ChatResponse = chat(model='llama3.2-vision', messages=[
@@ -72,7 +86,7 @@ if __name__ == "__main__":
     for file in image_files:
         print('Reading text from ' + file)
         page = extract_text(file)
-        print('Found ' + len(page.split()) + ' words!')
+        write_text_to_file(file.replace(".JPEG", ".txt"), page)
         all_pages += page
 
     generate_audio(all_pages)
