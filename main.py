@@ -1,9 +1,13 @@
 import os
+import time
 
 from ollama import chat
 from ollama import ChatResponse
 
 from openai import OpenAI
+
+TSS_HOST = "http://localhost:8880/v1"
+# Using the default Ollama Host
 
 def find_image_files(directory):
     """
@@ -32,7 +36,7 @@ def ask_for_input_folder(default='./test_input'):
     Returns:
     str: The folder path provided by the user or the default path.
     """
-    folder_path = input(f"Enter the folder path (default: {default}): ").strip()
+    folder_path = input(f"Enter the folder path of your images (default: {default}): ").strip()
     if not folder_path:
         folder_path = default
     return folder_path
@@ -63,9 +67,9 @@ def extract_text(file):
     return response.message.content
 
 # Kokoro
-def generate_audio(text):
+def generate_audio(text, output_dir):
     client = OpenAI(
-        base_url="http://localhost:8880/v1",
+        base_url=TSS_HOST,
         api_key="not-needed"
     )
 
@@ -75,18 +79,47 @@ def generate_audio(text):
         input=text,
         response_format="mp3"
     )
-    response.stream_to_file("output.mp3")
+    response.stream_to_file(output_dir + "/output.mp3")
+
+def time_remaining(elapsed_time, completed, total):
+    """
+    Estimates the remaining time based on the elapsed time, completed pages, and total pages.
+
+    Args:
+    elapsed_time (float): The time taken to process the completed pages (in seconds).
+    completed (int): The number of pages that have been processed.
+    total (int): The total number of pages to be processed.
+
+    Returns:
+    float: The estimated remaining time (in minutes).
+    """
+    if completed == 0:
+        return float('inf')  # Avoid division by zero
+    average_time_per_page = elapsed_time / completed
+    remaining_pages = total - completed
+    return (average_time_per_page * remaining_pages) / 60
 
 if __name__ == "__main__":
     directory_path = ask_for_input_folder()
     image_files = find_image_files(directory_path)
     image_files.sort()
     all_pages = ''
+    
+    total_pages = len(image_files)
+    start_time = time.time()
 
-    for file in image_files:
-        print('Reading text from ' + file)
+    for index, file in enumerate(image_files):
+        print(f'Reading text from {file}')
         page = extract_text(file)
-        write_text_to_file(file.replace(".JPEG", ".txt"), page)
+        
+        write_text_to_file(file + "_extracted.txt", page)
         all_pages += page
+        
+        elapsed_time = time.time() - start_time
+        remaining_time = time_remaining(elapsed_time, index + 1, total_pages)
+        
+        print(f'Page {index + 1}/{total_pages} processed. Estimated remaining time: {remaining_time:.2f} minutes')
 
-    generate_audio(all_pages)
+    print('Generating audio... (Just on moment)')
+    generate_audio(all_pages, directory_path)
+    print('Done :) Happy reading / listening!')
