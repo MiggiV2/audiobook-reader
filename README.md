@@ -15,6 +15,14 @@ This project provides a simple script to convert an analog book (image) into an 
   - `ollama`
   - `openai`
 
+## Services
+
+- Ollama:  
+You can download Ollama from here https://ollama.com. I recommonend the docker version.
+
+- OpenAi compatible TTS:  
+Kokoro is a very strong TTS model. Remsky on GitHub build a RestAPI with python [Kokoro-FastAPI](https://github.com/remsky/Kokoro-FastAPI).
+
 ## Installation
 
 1. Clone the repository:
